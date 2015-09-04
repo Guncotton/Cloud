@@ -8,33 +8,18 @@
 #include <stdlib.h>
 #include "cloud.h"
 
-/*
- * 
- */
-
-void OnExit(void)
-{
-	printf("Global Cleanup\n");
-	CleanUp_cURL();
-}
-
 int main(void)
 {
 	char *host = "https://api-iot.analoggarage.com/api/nodes";
 	char *Key = "apiKey:witchcraft";
 	
-	Init_cURL();
-	
-	char size = 0;
-	size = sizeof("[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]");
-	printf("Size is: %u\n", size);
+	//Initialize libcurl
+	curl_global_init(CURL_GLOBAL_SSL);
 	
 	RegisterNode(host, Key);
 	
-	atexit(OnExit);
+	//Free resources acq'd by libcurl.
+	curl_global_cleanup();
+	
 	return (EXIT_SUCCESS);
 }
-
-
-	
-
