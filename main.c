@@ -7,6 +7,9 @@
 
 #include <stdlib.h>
 #include "cloud.h"
+#include "datastructs.h"
+
+struct Node RasPi;
 
 int main(void)
 {
@@ -16,10 +19,13 @@ int main(void)
 	//Initialize libcurl
 	curl_global_init(CURL_GLOBAL_SSL);
 	
-	RegisterNode(host, Key);
+	//RegisterNode(host, Key);
 	
 	//Free resources acq'd by libcurl.
+	
 	curl_global_cleanup();
+	
+	RasPi.Mac = "Pi";
 	
 	return (EXIT_SUCCESS);
 }
