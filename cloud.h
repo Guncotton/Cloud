@@ -10,6 +10,8 @@
 #include <curl/curl.h>
 #include "debug.h"
 
+#ifndef CLOUD_H
+#define CLOUD_H
 /*
 For testing only. Registers a Node with the following
 Mac: MK-Node0
@@ -112,3 +114,4 @@ int RegisterNode(char *Url, char *apiKey)
 	
 	return(SUCCESS);
 }
+#endif /* CLOUD_H */
