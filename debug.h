@@ -93,4 +93,3 @@ static int debug_trace(CURL *handle, curl_infotype type, char *data, size_t size
   return 0;
 }
 #endif	/* DEBUG_H */
-

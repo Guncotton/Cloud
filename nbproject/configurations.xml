@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>cloud.h</itemPath>
+      <itemPath>debug.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -43,6 +44,8 @@
       </compileType>
       <item path="cloud.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="debug.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.c" ex="false" tool="0" flavor2="9">
       </item>
     </conf>
@@ -67,6 +70,8 @@
         </asmTool>
       </compileType>
       <item path="cloud.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="debug.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.c" ex="false" tool="0" flavor2="0">
       </item>
