@@ -12,13 +12,12 @@
 
 /*
 For testing only. Registers a Node with the following
- Mac: MK-Node0
+Mac: MK-Node0
 		Name: coffee
 		Type: temperature
- */
+*/
 const char data[] = "[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]";
 
-//Holds the data to be sent
 struct SendThis {
   const char* ReadPtr;
   int Size;
@@ -44,13 +43,9 @@ int RegisterNode(char *Url, char *apiKey)
 {
 	CURL *handle;
 	CURLcode CurlRtn = 0;
-	struct data config;
 	struct curl_slist *HeaderList;
 	struct SendThis DataSet;
-	
-	//For debugging.
-	config.trace_ascii = 1;
-	
+
 	DataSet.ReadPtr = data;
 	DataSet.Size = (long)strlen(data);
 	
@@ -73,7 +68,7 @@ int RegisterNode(char *Url, char *apiKey)
 	if (handle){	
 		// For Debug only.
 		curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, debug_data);
-		curl_easy_setopt(handle, CURLOPT_DEBUGDATA, &config);
+		curl_easy_setopt(handle, CURLOPT_DEBUGDATA, (void*)"1");
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, TRUE);
 		
 		//Pass host address.
