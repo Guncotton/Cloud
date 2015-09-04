@@ -57,7 +57,7 @@ static void dump(const char* text, FILE* stream, unsigned char* ptr, size_t size
   fflush(stream);
 }
 
-static int debug_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *instream)
+static int debug_data(CURL *handle, curl_infotype type, char *data, size_t size, void *instream)
 {
   struct data *config = (struct data *)instream;
   const char *text;
@@ -90,6 +90,6 @@ static int debug_trace(CURL *handle, curl_infotype type, char *data, size_t size
   }
 
   dump(text, stderr, (unsigned char*)data, size, config->trace_ascii);
-  return 0;
+  return(SUCCESS);
 }
 #endif	/* DEBUG_H */

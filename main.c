@@ -13,8 +13,12 @@ int main(void)
 	char *host = "https://api-iot.analoggarage.com/api/nodes";
 	char *Key = "apiKey:witchcraft";
 	
+	//Initialize libcurl
 	curl_global_init(CURL_GLOBAL_SSL);
+	
 	RegisterNode(host, Key);
+	
+	//Free resources acq'd by libcurl.
 	curl_global_cleanup();
 	
 	return (EXIT_SUCCESS);
