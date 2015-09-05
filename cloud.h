@@ -34,11 +34,11 @@ static size_t Send_CallBack(void* Buffer, size_t Size, size_t nmemb, void* sourc
 
   if(Payload->Size) {
     *(char*)Buffer = Payload->ReadPtr[0];
-    Payload->ReadPtr++;                 /* advance pointer */
-    Payload->Size--;                /* less data left */
-    return 1;                        /* we return 1 byte at a time! */
+    Payload->ReadPtr++; // Advance 1 byte.
+    Payload->Size--; // 1 less byte left.
+    return 1; // 1 byte at a time.
   }
-  return 0;                          /* no more data left to deliver */
+  return 0; // 0 bytes left
 }
 
 int RegisterNode(char *Url, char *apiKey)
@@ -67,6 +67,12 @@ int RegisterNode(char *Url, char *apiKey)
 		return(FAILURE);
 	}
 	
+	FILE buffer;
+	
+	fputs(DataSet.ReadPtr, &buffer);
+	
+	printf("Payload Size %i bytes\n", DataSet.Size);
+	
 	if (handle){	
 		// For Debug only.
 		curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, debug_data);
@@ -76,13 +82,13 @@ int RegisterNode(char *Url, char *apiKey)
 		//Pass host address.
 		curl_easy_setopt(handle, CURLOPT_URL, Url);
 		
-		//
+		/*
+		 * The POST request requires a preceeding PUT. Do this
+		 * by setting the option a custom command.
+		*/
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "PUT");
 		
-		//Display header is stdout. Not needed in production or when debug.
-		//curl_easy_setopt(handle, CURLOPT_HEADER, TRUE);
-		
-		//Config to send HTTP POST
+		//HTTP POST request.
 		curl_easy_setopt(handle, CURLOPT_POST, TRUE);
 		
 		//Bytes for server to expect. 
@@ -92,13 +98,13 @@ int RegisterNode(char *Url, char *apiKey)
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);
 		
 		//Function pointer, is called when lib needs data to send.
-		curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
+		//curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
 		
 		//Config pointer to our data.
-		curl_easy_setopt(handle, CURLOPT_READDATA, &DataSet);
+		curl_easy_setopt(handle, CURLOPT_READDATA, &buffer);
 		
 		
-		curl_easy_perform(handle); //Start xfer.
+		//curl_easy_perform(handle); //Start xfer.
 		
 		if(CurlRtn != CURLE_OK)
 			fprintf(stderr, "Xfer Failed: %s\n", curl_easy_strerror(CurlRtn));
