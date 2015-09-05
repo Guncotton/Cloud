@@ -1,3 +1,12 @@
+/* 
+ * File:   cloud.h
+ * Author: mkardasi
+ *
+ * Created on September 2, 2015, 12:08 PM
+ *
+ * Library for uploading data to ADI IoT servers.
+ */
+
 //For program clarity. DO NOT CHANGE
 #define TRUE	1
 #define FALSE	0
@@ -44,20 +53,17 @@ static size_t Send_CallBack(void* Buffer, size_t Size, size_t nmemb, void* sourc
 int RegisterNode(char *Url, char *apiKey)
 {
 	CURL *handle;
-	CURLcode CurlRtn = 0;
+	CURLcode CurlStatus = 0;
 	struct curl_slist *HeaderList;
 	struct SendThis DataSet;
 
 	DataSet.ReadPtr = data;
 	DataSet.Size = (long)strlen(data);
 	
-	//printf("Sizeof DataSet: %u\n", Sizeof(
-	//Clear console.
-	//printf("\033[2J");
-	
 	//Returns cURL's handle.
 	handle = curl_easy_init();
 	
+	//Setup custom headers for req'd by the cloud server.
 	HeaderList = NULL;
 	HeaderList = curl_slist_append(HeaderList, apiKey);
 	HeaderList = curl_slist_append(HeaderList, "Content-Type:application/json");
@@ -97,17 +103,17 @@ int RegisterNode(char *Url, char *apiKey)
 		//Pass custom headers to include.
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);
 		
-		//Function pointer, is called when lib needs data to send.
+		//Enables callback func for outgoing data & passes it's ptr.
 		//curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
 		
 		//Config pointer to our data.
 		curl_easy_setopt(handle, CURLOPT_READDATA, &buffer);
 		
+		//Perform transfer.
+		//curl_easy_perform(handle);
 		
-		//curl_easy_perform(handle); //Start xfer.
-		
-		if(CurlRtn != CURLE_OK)
-			fprintf(stderr, "Xfer Failed: %s\n", curl_easy_strerror(CurlRtn));
+		if(CurlStatus != CURLE_OK)
+			fprintf(stderr, "Xfer Failed: %s\n", curl_easy_strerror(CurlStatus));
 	}
 	else {
 		fprintf(stderr, "Handle Null\n");
