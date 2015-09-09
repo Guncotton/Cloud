@@ -93,7 +93,7 @@ static int debug_data(CURL *handle, curl_infotype type, char *data, size_t size,
   }
 
   dump(text, stderr, (unsigned char*)data, size, config->trace_ascii);
-  return(SUCCESS);
+  return(1);
 }
 
 void DebugF(char* string, int* value)
