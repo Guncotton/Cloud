@@ -30,24 +30,37 @@ Mac: MK-Node0
 const char data[] = "[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]";
 
 struct SendThis {
-  const char* ReadPtr;
-  int Size;
+  const char* ptrData;
+  int intSize;
 };
 
-static size_t Send_CallBack(void* Buffer, size_t Size, size_t nmemb, void* source)
-{
-  struct SendThis* Payload = (struct SendThis*)source;
+/*
+ * This is a callback function which is invoked when libcurl is performing a send.
+ * Source is a ptr to the data that needs to be sent. Payload is a ptr to a block
+ * who's contents will be sent when the function exits. Size is the size in bytes,
+ * of the data type that is being sent. Blocks is the numbers of elements to send
+ * ie. Source = "ABC" then Size = 1 byte & Blocks = 3.
+ */
 
-  if(Size*nmemb < 1)
+static size_t Send_CallBack(void* Payload, size_t Size, size_t Blocks, void* Source)
+{
+  struct SendThis* Buffer = (struct SendThis*)Source;
+
+  if(Size*Blocks < 1)
     return 0;
 
-  if(Payload->Size) {
-    *(char*)Buffer = Payload->ReadPtr[0];
-    Payload->ReadPtr++; // Advance 1 byte.
-    Payload->Size--; // 1 less byte left.
+  if(Payload->intSize) {
+    *(char*)Payload = Buffer->ptrData[0];
+    Buffer->ptrData++; // Advance 1 byte.
+    Buffer->intSize--; // 1 less byte left.
     return 1; // 1 byte at a time.
   }
   return 0; // 0 bytes left
+}
+
+int BuildRegString(Input, Output, size_t Len)
+{
+	
 }
 
 int RegisterNode(char *Url, char *apiKey)
@@ -103,14 +116,14 @@ int RegisterNode(char *Url, char *apiKey)
 		//Pass custom headers to include.
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);
 		
-		//Enables callback func for outgoing data & passes it's ptr.
+		//Function invoked when libcurl wants to send data.
 		//curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
 		
-		//Config pointer to our data.
+		//Set pointer to our data.
 		curl_easy_setopt(handle, CURLOPT_READDATA, &buffer);
 		
 		//Perform transfer.
-		//curl_easy_perform(handle);
+		curl_easy_perform(handle);
 		
 		if(CurlStatus != CURLE_OK)
 			fprintf(stderr, "Xfer Failed: %s\n", curl_easy_strerror(CurlStatus));
