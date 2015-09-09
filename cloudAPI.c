@@ -54,6 +54,8 @@ int RegisterNode(char *Url, char *apiKey)
 		* otherwise server will expect chunked transfer.
 		*/
 		stream = open_memstream(&Buf, &BufSize);
+		
+		// manually creating the string for test purposes.
 		fprintf(stream, "[{\"mac\": \"MK-Node0\",\"sensors\": "
 				"[{\"name\": \"coffee\",\"type\": \"porkypig\"}]}]");
 		fflush(stream);
