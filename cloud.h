@@ -49,17 +49,17 @@ static size_t Send_CallBack(void* Payload, size_t Size, size_t Blocks, void* Sou
   if(Size*Blocks < 1)
     return 0;
 
-  if(Payload->BytesRemaining) {
+  if(Buffer->BytesRemaining) {
     *(char*)Payload = Buffer->Data;
     //Buffer->ptrData++; // Advance 1 byte.
-    Buffer->BytesRemaining =- strlen(Buffer->Data);
+    Buffer->BytesRemaining -= strlen(Buffer->Data);
     return strlen(Buffer->Data);
   }
   return 0; // 0 bytes left
 }
 
 //return len of string.
-int BuildRegString(Input, Output, size_t Len)
+int BuildRegString(char* Input, char* Output, size_t Len)
 {	
 	//example for debugging only.
     	printf("[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]\n");
@@ -123,7 +123,7 @@ int RegisterNode(char *Url, char *apiKey)
 		curl_easy_setopt(handle, CURLOPT_POST, TRUE);
 		
 		//Bytes for server to expect. 
-		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, Outbound.Size);
+		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, Outbound.BytesRemaining);
 		
 		//Pass custom headers to include.
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);
