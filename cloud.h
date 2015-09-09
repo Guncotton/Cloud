@@ -30,8 +30,8 @@ Mac: MK-Node0
 const char data[] = "[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]";
 
 struct SendThis {
-  const char* ptrData;
-  int intSize;
+  const char* String;
+  int BytesRemaining;
 };
 
 /*
@@ -49,11 +49,11 @@ static size_t Send_CallBack(void* Payload, size_t Size, size_t Blocks, void* Sou
   if(Size*Blocks < 1)
     return 0;
 
-  if(Payload->intSize) {
-    *(char*)Payload = Buffer->ptrData[0];
-    Buffer->ptrData++; // Advance 1 byte.
-    Buffer->intSize--; // 1 less byte left.
-    return 1; // 1 byte at a time.
+  if(Payload->BytesRemaining) {
+    *(char*)Payload = Buffer->String;
+    //Buffer->ptrData++; // Advance 1 byte.
+    Buffer->BytesRemaining =- strlen(Buffer->String);
+    return strlen(Buffer->String);
   }
   return 0; // 0 bytes left
 }
@@ -71,7 +71,7 @@ int RegisterNode(char *Url, char *apiKey)
 	struct SendThis DataSet;
 
 	DataSet.ReadPtr = data;
-	DataSet.Size = (long)strlen(data);
+	DataSet.Size = (int)strlen(data);
 	
 	//Returns cURL's handle.
 	handle = curl_easy_init();
