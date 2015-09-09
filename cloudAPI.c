@@ -4,7 +4,7 @@
  *
  * Created on September 2, 2015, 12:08 PM
  *
- * Functions for uploading data to ADI IoT servers.
+ * Functions for uploading data to IoT cloud servers.
  */
 
 #include "cloudAPI.h"
