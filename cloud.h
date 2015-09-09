@@ -60,7 +60,23 @@ static size_t Send_CallBack(void* Payload, size_t Size, size_t Blocks, void* Sou
 
 int BuildRegString(Input, Output, size_t Len)
 {
-	
+    	printf("[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]\n");
+
+    	char* Node = "MK-Node0";
+    	char* SensName = "coffee";
+    	char* Type = "temperature";
+    
+    	char* a = "[{\"mac\": \"";
+	char* b = Node;
+	char* c = "\",\"sensors\": [{\"name\": \"";
+	char* d = SensName;
+	char* e = "\",\"type\": \"";
+	char* f = Type;
+	char* g = "\"}]}]";
+    
+    	printf("%s%s%s%s%s%s%s", a,b,c,d,e,f,g);
+        printf("\n");
+        return 0;
 }
 
 int RegisterNode(char *Url, char *apiKey)
