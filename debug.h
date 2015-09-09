@@ -3,6 +3,9 @@
  * Author: mkardasi
  *
  * Created on September 4, 2015, 1:23 PM
+ *
+ * These are functions for debugging. These should not be used in the production
+ * version. 
  */
 
 #ifndef DEBUG_H
@@ -61,7 +64,7 @@ static int debug_data(CURL *handle, curl_infotype type, char *data, size_t size,
 {
   struct data *config = (struct data *)instream;
   const char *text;
-  (void)handle; /* prevent compiler warning */
+  //(void)handle; /* prevent compiler warning */
 
   switch (type) {
   case CURLINFO_TEXT:
@@ -90,6 +93,11 @@ static int debug_data(CURL *handle, curl_infotype type, char *data, size_t size,
   }
 
   dump(text, stderr, (unsigned char*)data, size, config->trace_ascii);
-  return(SUCCESS);
+  return(1);
+}
+
+void DebugF(char* string, int* value)
+{
+	fprintf(stderr, "DEBUG: %s%i\n", string, *value);
 }
 #endif	/* DEBUG_H */

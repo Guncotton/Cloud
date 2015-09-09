@@ -8,16 +8,5 @@
 #ifndef DATASTRUCTS_H
 #define	DATASTRUCTS_H
 
-struct Signal 
-{
-	char* Name;
-	char* Type;
-	char* Value;
-};
 
-struct Node
-{
-	char* Mac;
-	struct Signal Sensor[8];
-};
 #endif	/* DATASTRUCTS_H */
