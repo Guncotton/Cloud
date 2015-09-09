@@ -30,7 +30,7 @@ Mac: MK-Node0
 const char data[] = "[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]";
 
 struct SendThis {
-  const char* String;
+  const char* Data;
   int BytesRemaining;
 };
 
@@ -50,16 +50,18 @@ static size_t Send_CallBack(void* Payload, size_t Size, size_t Blocks, void* Sou
     return 0;
 
   if(Payload->BytesRemaining) {
-    *(char*)Payload = Buffer->String;
+    *(char*)Payload = Buffer->Data;
     //Buffer->ptrData++; // Advance 1 byte.
-    Buffer->BytesRemaining =- strlen(Buffer->String);
-    return strlen(Buffer->String);
+    Buffer->BytesRemaining =- strlen(Buffer->Data);
+    return strlen(Buffer->Data);
   }
   return 0; // 0 bytes left
 }
 
+//return len of string.
 int BuildRegString(Input, Output, size_t Len)
-{
+{	
+	//example for debugging only.
     	printf("[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]\n");
 
     	char* Node = "MK-Node0";
@@ -84,15 +86,15 @@ int RegisterNode(char *Url, char *apiKey)
 	CURL *handle;
 	CURLcode CurlStatus = 0;
 	struct curl_slist *HeaderList;
-	struct SendThis DataSet;
+	struct SendThis Outbound;
 
-	DataSet.ReadPtr = data;
-	DataSet.Size = (int)strlen(data);
+	Outbound.Data = data;
+	Outbound.BytesRemaining = (int)strlen(data);
 	
 	//Returns cURL's handle.
 	handle = curl_easy_init();
 	
-	//Setup custom headers for req'd by the cloud server.
+	//Setup custom headers req'd by the cloud server.
 	HeaderList = NULL;
 	HeaderList = curl_slist_append(HeaderList, apiKey);
 	HeaderList = curl_slist_append(HeaderList, "Content-Type:application/json");
@@ -101,12 +103,6 @@ int RegisterNode(char *Url, char *apiKey)
 		fprintf(stderr, "Error: Header List Null\n");
 		return(FAILURE);
 	}
-	
-	FILE buffer;
-	
-	fputs(DataSet.ReadPtr, &buffer);
-	
-	printf("Payload Size %i bytes\n", DataSet.Size);
 	
 	if (handle){	
 		// For Debug only.
@@ -118,25 +114,25 @@ int RegisterNode(char *Url, char *apiKey)
 		curl_easy_setopt(handle, CURLOPT_URL, Url);
 		
 		/*
-		 * The POST request requires a preceeding PUT. Do this
-		 * by setting the option a custom command.
-		*/
+		 * The HTTP POST request requires a preceeding PUT. Do this
+		 * by setting the option for a custom command.
+		 */
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "PUT");
 		
 		//HTTP POST request.
 		curl_easy_setopt(handle, CURLOPT_POST, TRUE);
 		
 		//Bytes for server to expect. 
-		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, DataSet.Size);
+		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, Outbound.Size);
 		
 		//Pass custom headers to include.
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);
 		
 		//Function invoked when libcurl wants to send data.
-		//curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
+		curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
 		
 		//Set pointer to our data.
-		curl_easy_setopt(handle, CURLOPT_READDATA, &buffer);
+		curl_easy_setopt(handle, CURLOPT_READDATA, &Outbound);
 		
 		//Perform transfer.
 		curl_easy_perform(handle);
