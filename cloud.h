@@ -1,3 +1,12 @@
+/* 
+ * File:   cloud.h
+ * Author: mkardasi
+ *
+ * Created on September 2, 2015, 12:08 PM
+ *
+ * Library for uploading data to ADI IoT servers.
+ */
+
 //For program clarity. DO NOT CHANGE
 #define TRUE	1
 #define FALSE	0
@@ -21,43 +30,71 @@ Mac: MK-Node0
 const char data[] = "[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]";
 
 struct SendThis {
-  const char* ReadPtr;
-  int Size;
+  const char* Data;
+  int BytesRemaining;
 };
 
-static size_t Send_CallBack(void* Buffer, size_t Size, size_t nmemb, void* source)
-{
-  struct SendThis* Payload = (struct SendThis*)source;
+/*
+ * This is a callback function which is invoked when libcurl is performing a send.
+ * Source is a ptr to the data that needs to be sent. Payload is a ptr to a block
+ * who's contents will be sent when the function exits. Size is the size in bytes,
+ * of the data type that is being sent. Blocks is the numbers of elements to send
+ * ie. Source = "ABC" then Size = 1 byte & Blocks = 3.
+ */
 
-  if(Size*nmemb < 1)
+static size_t Send_CallBack(void* Payload, size_t Size, size_t Blocks, void* Source)
+{
+  struct SendThis* Buffer = (struct SendThis*)Source;
+
+  if(Size*Blocks < 1)
     return 0;
 
-  if(Payload->Size) {
-    *(char*)Buffer = Payload->ReadPtr[0];
-    Payload->ReadPtr++;                 /* advance pointer */
-    Payload->Size--;                /* less data left */
-    return 1;                        /* we return 1 byte at a time! */
+  if(Buffer->BytesRemaining) {
+    *(char*)Payload = Buffer->Data;
+    //Buffer->ptrData++; // Advance 1 byte.
+    Buffer->BytesRemaining -= strlen(Buffer->Data);
+    return strlen(Buffer->Data);
   }
-  return 0;                          /* no more data left to deliver */
+  return 0; // 0 bytes left
+}
+
+//return len of string.
+int BuildRegString(char* Input, char* Output, size_t Len)
+{	
+	//example for debugging only.
+    	printf("[{\"mac\": \"MK-Node0\",\"sensors\": [{\"name\": \"coffee\",\"type\": \"temperature\"}]}]\n");
+
+    	char* Node = "MK-Node0";
+    	char* SensName = "coffee";
+    	char* Type = "temperature";
+    
+    	char* a = "[{\"mac\": \"";
+	char* b = Node;
+	char* c = "\",\"sensors\": [{\"name\": \"";
+	char* d = SensName;
+	char* e = "\",\"type\": \"";
+	char* f = Type;
+	char* g = "\"}]}]";
+    
+    	printf("%s%s%s%s%s%s%s", a,b,c,d,e,f,g);
+        printf("\n");
+        return 0;
 }
 
 int RegisterNode(char *Url, char *apiKey)
 {
 	CURL *handle;
-	CURLcode CurlRtn = 0;
+	CURLcode CurlStatus = 0;
 	struct curl_slist *HeaderList;
-	struct SendThis DataSet;
+	struct SendThis Outbound;
 
-	DataSet.ReadPtr = data;
-	DataSet.Size = (long)strlen(data);
-	
-	//printf("Sizeof DataSet: %u\n", Sizeof(
-	//Clear console.
-	//printf("\033[2J");
+	Outbound.Data = data;
+	Outbound.BytesRemaining = (int)strlen(data);
 	
 	//Returns cURL's handle.
 	handle = curl_easy_init();
 	
+	//Setup custom headers req'd by the cloud server.
 	HeaderList = NULL;
 	HeaderList = curl_slist_append(HeaderList, apiKey);
 	HeaderList = curl_slist_append(HeaderList, "Content-Type:application/json");
@@ -76,32 +113,32 @@ int RegisterNode(char *Url, char *apiKey)
 		//Pass host address.
 		curl_easy_setopt(handle, CURLOPT_URL, Url);
 		
-		//
+		/*
+		 * The HTTP POST request requires a preceeding PUT. Do this
+		 * by setting the option for a custom command.
+		 */
 		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "PUT");
 		
-		//Display header is stdout. Not needed in production or when debug.
-		//curl_easy_setopt(handle, CURLOPT_HEADER, TRUE);
-		
-		//Config to send HTTP POST
+		//HTTP POST request.
 		curl_easy_setopt(handle, CURLOPT_POST, TRUE);
 		
 		//Bytes for server to expect. 
-		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, DataSet.Size);
+		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, Outbound.BytesRemaining);
 		
 		//Pass custom headers to include.
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);
 		
-		//Function pointer, is called when lib needs data to send.
+		//Function invoked when libcurl wants to send data.
 		curl_easy_setopt(handle, CURLOPT_READFUNCTION, Send_CallBack);
 		
-		//Config pointer to our data.
-		curl_easy_setopt(handle, CURLOPT_READDATA, &DataSet);
+		//Set pointer to our data.
+		curl_easy_setopt(handle, CURLOPT_READDATA, &Outbound);
 		
+		//Perform transfer.
+		curl_easy_perform(handle);
 		
-		curl_easy_perform(handle); //Start xfer.
-		
-		if(CurlRtn != CURLE_OK)
-			fprintf(stderr, "Xfer Failed: %s\n", curl_easy_strerror(CurlRtn));
+		if(CurlStatus != CURLE_OK)
+			fprintf(stderr, "Xfer Failed: %s\n", curl_easy_strerror(CurlStatus));
 	}
 	else {
 		fprintf(stderr, "Handle Null\n");
