@@ -21,6 +21,8 @@
 #define FALSE	0
 #define SUCCESS 0
 #define FAILURE -1
+#define DATA	1
+#define REGISTR 0
 
 struct Signal 
 {

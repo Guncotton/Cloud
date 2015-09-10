@@ -24,7 +24,7 @@ static void dump(const char* text, FILE* stream, unsigned char* ptr, size_t size
 
   if(nohex)
     /* without the hex output, we can fit more on screen */
-    width = 0x40;
+    width = 0x5C;
 
   fprintf(stream, "%s, %10.10ld bytes\n", text, (long)size);
 

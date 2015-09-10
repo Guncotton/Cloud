@@ -4,7 +4,8 @@
  *
  * Created on September 2, 2015, 12:08 PM
  *
- * Functions for uploading data to IoT cloud servers.
+ * Functions for uploading data to IoT cloud servers. These functions are 
+ * dependant on cURL libraries (libcurl).
  */
 
 #include "cloudAPI.h"
@@ -13,7 +14,7 @@
  * Function registers a Node(s) with the server. A Node must be registered before
  * any data is uploaded.
  */
-int RegisterNode(FILE* stream, size_t* streamSize, char* Url, char* apiKey)
+void XferToSrver(FILE* stream, size_t* streamSize, char* Url, char* apiKey)
 {
 	CURL *handle;
 	CURLcode CurlRtn = 0;
@@ -62,58 +63,56 @@ int RegisterNode(FILE* stream, size_t* streamSize, char* Url, char* apiKey)
 	// Clean-up allocated resources.
 	curl_slist_free_all(HeaderList);
 	curl_easy_cleanup(handle);
-	
-	return(SUCCESS);
 }
 
 /*
  * Generates the HTTP string to register nNodes & nSensors
  */
-int BuildRegString(size_t nNode, size_t nSensor)
+void BuildHTTPStr(FILE* target, void* source, size_t nNode, size_t nSensor, char Mode)
 {
 	int i, j;
+	struct Node* buffer = (struct Node*)source;
 	
-	fprintf(stdout, "[{"
-					"\"mac\":\"MK-Node0\","
-						"\"sensors\": [{"
-							"\"name\":\"V1\","
-							"\"type\":\"Volts\"},"
-							"{\"name\":\"A1\","
-							"\"type\":\"Amps\""
-							"}]"
-					"}]");
-	printf("\n");
-	
-	struct Node MyNode[2];
-	
-	MyNode[0].Mac = "MK-Node0";
-	MyNode[0].Sensor[0].Name = "V1";
-	MyNode[0].Sensor[0].Type = "Volts";
-	MyNode[0].Sensor[1].Name = "A1";
-	MyNode[0].Sensor[1].Type = "Amps";
-	
-	MyNode[1].Mac = "MK-Node1";
-	MyNode[1].Sensor[0].Name = "V2";
-	MyNode[1].Sensor[0].Type = "Volts";
-	MyNode[1].Sensor[1].Name = "A2";
-	MyNode[1].Sensor[1].Type = "Amps";
-	
-	putchar('[');
-	for(i = 0; i < nNode; i++)
+	// Registration string.
+	if(Mode == 0)
 	{
-		if(i!=0) putchar(',');
-		printf("{\"mac\": \"%s\",\"sensors\": [", MyNode[i].Mac);
-		for(j = 0; j < nSensor; j++)
+		putc('[', target);
+		for(i = 0; i < nNode; i++)
 		{
-			if(j!=0) putchar(',');
-			printf("{\"name\": \"%s\",\"type\": \"%s\"}",
-					MyNode[i].Sensor[j].Name, MyNode[i].Sensor[j].Type);
+			if(i!=0) putc(',', target);
+			fprintf(target, "{\"mac\":\"%s\",\"sensors\":[", buffer[i].Mac);
+			for(j = 0; j < nSensor; j++)
+			{
+				if(j!=0) putc(',', target);
+				fprintf(target, "{\"name\":\"%s\",\"type\":\"%s\"}",
+						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Type);
+			}
+			fprintf(target, "]");
 		}
-		printf("]");
+		fprintf(target, "}]");
+
+		fflush(target);
 	}
-	printf("}]");
-		
-	return 0;
+	else
+	{
+		putc('[', target);
+		for(i = 0; i < nNode; i++)
+		{
+			if(i!=0) putc(',', target);
+			fprintf(target, "{\"mac\":\"%s\",\"sensors\":[", buffer[i].Mac);
+			for(j = 0; j < nSensor; j++)
+			{
+				if(j!=0) putc(',', target);
+				fprintf(target, "{\"name\":\"%s\",\"type\":\"%s\",\"value\":\"%s\"}",
+						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Type,
+						buffer[i].Sensor[j].Value);
+			}
+			fprintf(target, "]");
+		}
+		fprintf(target, "}]");
+
+		fflush(target);
+	}
 }
 
 int main(void)
@@ -124,38 +123,36 @@ int main(void)
 	char* Buf;
 	size_t BufSize;
 	FILE* stream;
+	struct Node SomeNode[2];
 	
-	//Initialize libcurl
+	//Initialize libcurl.
 	curl_global_init(CURL_GLOBAL_SSL);
 	
-	//funcRTN = BuildRegString(2,2);
+	// Test config.
+	SomeNode[0].Mac = "MK-Node0";
+	SomeNode[0].Sensor[0].Name = "V1";
+	SomeNode[0].Sensor[0].Type = "Voltage";
+	SomeNode[0].Sensor[1].Name = "A1";
+	SomeNode[0].Sensor[1].Type = "Current";
 	
+	SomeNode[1].Mac = "MK-Node1";
+	SomeNode[1].Sensor[0].Name = "V2";
+	SomeNode[1].Sensor[0].Type = "Voltage";
+	SomeNode[1].Sensor[1].Name = "A2";
+	SomeNode[1].Sensor[1].Type = "Current";	
 	/*
 	* Create a stream to a dynamic mem buffer & write our registration 
-	* string. Point libcurl to stream. Set number of bytes in POST request
-	* otherwise server will expect chunked transfer.
+	* string. Point libcurl to stream.
 	*/
 	stream = open_memstream(&Buf, &BufSize);
-
-	// manually creating the string for test purposes.
-	fprintf(stream, "[{"
-						"\"mac\":\"MK-Node0\","
-							"\"sensors\":[{"
-								"\"name\":\"coffee\","
-								"\"type\":\"porkypig\"}]"
-					"}]");
-	fflush(stream);
 	
-	//Registers Node/Sensors with Cloud server.
-	funcRTN = RegisterNode(stream, &BufSize, host, Key);
-	
-	//DebugF("RegisterNode:", &funcRTN);
+	BuildHTTPStr(stream, &SomeNode, 1, 2, REGISTR);
+	XferToSrver(stream, &BufSize, host, Key);
 	
 	//Free resources acq'd by libcurl.		
 	// Clean-up stream & buffer.
 	fclose(stream);
 	free(Buf);	
 	curl_global_cleanup();
-
 	return (EXIT_SUCCESS);
 }
