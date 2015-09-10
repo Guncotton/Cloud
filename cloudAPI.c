@@ -61,7 +61,7 @@ void XferToSrver(FILE* stream, size_t* streamSize, char* Url, char* apiKey)
 	}
 	
 	// Clean-up allocated resources.
-	curl_slist_free_all(HeaderList);
+	//curl_slist_free_all(HeaderList);
 	curl_easy_cleanup(handle);
 }
 
@@ -72,6 +72,10 @@ void BuildHTTPStr(FILE* target, void* source, size_t nNode, size_t nSensor, char
 {
 	int i, j;
 	struct Node* buffer = (struct Node*)source;
+	
+	//target = stdout;
+	
+	rewind(target);
 	
 	// Registration string.
 	if(Mode == 0)
@@ -93,7 +97,7 @@ void BuildHTTPStr(FILE* target, void* source, size_t nNode, size_t nSensor, char
 
 		fflush(target);
 	}
-	else
+	else // data string.
 	{
 		putc('[', target);
 		for(i = 0; i < nNode; i++)
@@ -103,9 +107,8 @@ void BuildHTTPStr(FILE* target, void* source, size_t nNode, size_t nSensor, char
 			for(j = 0; j < nSensor; j++)
 			{
 				if(j!=0) putc(',', target);
-				fprintf(target, "{\"name\":\"%s\",\"type\":\"%s\",\"value\":\"%s\"}",
-						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Type,
-						buffer[i].Sensor[j].Value);
+				fprintf(target, "{\"name\":\"%s\",\"value\":\"%s\"}",
+						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Value);
 			}
 			fprintf(target, "]");
 		}
@@ -118,7 +121,7 @@ void BuildHTTPStr(FILE* target, void* source, size_t nNode, size_t nSensor, char
 int main(void)
 {
 	int funcRTN = -1;
-	char* host = "https://api-iot.analoggarage.com/api/nodes";
+	char* Host = "https://api-iot.analoggarage.com/api/nodes";
 	char* Key = "apiKey:witchcraft";
 	char* Buf;
 	size_t BufSize;
@@ -132,14 +135,18 @@ int main(void)
 	SomeNode[0].Mac = "MK-Node0";
 	SomeNode[0].Sensor[0].Name = "V1";
 	SomeNode[0].Sensor[0].Type = "Voltage";
+	SomeNode[0].Sensor[0].Value = "120";
 	SomeNode[0].Sensor[1].Name = "A1";
 	SomeNode[0].Sensor[1].Type = "Current";
+	SomeNode[0].Sensor[1].Value = "12";
 	
 	SomeNode[1].Mac = "MK-Node1";
 	SomeNode[1].Sensor[0].Name = "V2";
 	SomeNode[1].Sensor[0].Type = "Voltage";
+	SomeNode[1].Sensor[0].Value = "240";
 	SomeNode[1].Sensor[1].Name = "A2";
-	SomeNode[1].Sensor[1].Type = "Current";	
+	SomeNode[1].Sensor[1].Type = "Current";
+	SomeNode[1].Sensor[1].Value = "6";
 	/*
 	* Create a stream to a dynamic mem buffer & write our registration 
 	* string. Point libcurl to stream.
@@ -147,12 +154,22 @@ int main(void)
 	stream = open_memstream(&Buf, &BufSize);
 	
 	BuildHTTPStr(stream, &SomeNode, 1, 2, REGISTR);
-	XferToSrver(stream, &BufSize, host, Key);
+	XferToSrver(stream, &BufSize, Host, Key);
+	
+	//fclose(stream);
+	//free(Buf);
+	
+	// We would sample some data here....
+	
+	//puts("\n");
+	
+	BuildHTTPStr(stream, &SomeNode, 1, 2, DATA);
+	XferToSrver(stream, &BufSize, Host, Key);
 	
 	//Free resources acq'd by libcurl.		
 	// Clean-up stream & buffer.
 	fclose(stream);
-	free(Buf);	
+	free(Buf);
 	curl_global_cleanup();
 	return (EXIT_SUCCESS);
 }
