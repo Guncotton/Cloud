@@ -45,8 +45,8 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, TRUE);
 		
 		/*
-		 * Set URL. Set PUT to preceed the main HTTP request. Set POST as the
-		 * HTTP request. Set HTTP request to include custom headers.
+		 * Configure libcurl options depending on type of transfer. Note
+		 * CURLOPT_POST is a data encoding setting not an HTTP POST cmd.
 		 */
 		curl_easy_setopt(handle, CURLOPT_URL, Url);
 		if(Mode == 0) curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "PUT");
@@ -58,7 +58,7 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 			
 		// Perform transfer.
 		curl_easy_perform(handle);
-		
+
 		if(CurlRtn != CURLE_OK)
 			fprintf(stderr, "Error:Xfer Failed: %s\n", curl_easy_strerror(CurlRtn));
 	}
@@ -72,7 +72,7 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 }
 
 /*
- * This function creates a string which is the payload to be sent to the server. Func
+ * Function creates a string which is the payload to be sent to the server. Func
  * will create a Node(s) registration string or sensor data string.
  * -Mode: value of 0 generates registration payload, value of 1 generates data payload 
  * -target: points to a type FILE stream to which the payload string will be written.
@@ -119,7 +119,7 @@ void BuildHTTPStr(char Mode, FILE* target, void* source, size_t nNode, size_t nS
 			for(j = 0; j < nSensor; j++)
 			{
 				if(j!=0) putc(',', target);
-				fprintf(target, "{\"name\":\"%s\",\"value\":\"%s\"}",
+				fprintf(target, "{\"name\":\"%s\",\"value\":%s}",
 						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Value);
 			}
 			fprintf(target, "]");
@@ -134,11 +134,13 @@ int main(void)
 {
 	int funcRTN = -1;
 	char* Host = "https://api-iot.analoggarage.com/api/nodes";
-	char* Key = "apiKey:witchcraft";
-	char* Buf;
+	char* Key = "apiKey:ithinkthereforeiam";
+	char* Buffer;
 	size_t BufSize;
 	FILE* stream;
 	struct Node SomeNode[2];
+	
+	memset(&SomeNode, '0', sizeof(SomeNode)); 
 	
 	//Initialize libcurl.
 	curl_global_init(CURL_GLOBAL_SSL);
@@ -163,18 +165,45 @@ int main(void)
 	* Create a stream to a dynamic mem buffer & write our registration 
 	* string. Point libcurl to stream.
 	*/
-	stream = open_memstream(&Buf, &BufSize);
+	/*
+	stream = open_memstream(&Buffer, &BufSize);
 	BuildHTTPStr(REGISTR, stream, &SomeNode, 1, 2);
+	XferToSrver(REGISTR, stream, &BufSize, Host, Key);
 	fclose(stream);
-	XferToSrver(stream, &BufSize, Host, Key);
-	free(Buffer);
+	//free(Buffer);
 	
 	// We would sample some data here....
 	
-	stream = opem_memstream(&Buffer, &BufSize);
-	BuildHTTPStr(DATA, stream, &SomeNode, 1, 2);
+	
+	
+
+	*/
+	
+	int s1,s2, value;
+	char str[4];
+	int i;
+	
+	stream = open_memstream(&Buffer, &BufSize);
+	srand(time(NULL));
+	for(i=0; i<10; i++)
+	{
+		value = rand()%20+110;
+		sprintf(str, "%d", value);
+		s1 = sizeof(str);
+		s2 = sizeof(SomeNode[0].Sensor[0].Value);
+		int adds2 = (int)&SomeNode[0].Sensor[0].Value;
+		
+		
+		memcpy(SomeNode[0].Sensor[0].Value, str, sizeof(str));
+		
+		value = rand()%4+8;
+		sprintf(str, "%d", value);
+		memcpy(SomeNode[0].Sensor[1].Value, str, sizeof(str));
+		
+		BuildHTTPStr(DATA, stream, &SomeNode, 1, 2);
+		//XferToSrver(DATA, stream, &BufSize, Host, Key);
+	}
 	fclose(stream);
-	XferToSrver(stream, &BufSize, Host, Key);
 	free(Buffer);
 	
 	//Free resources acq'd by libcurl.		
