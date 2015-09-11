@@ -164,7 +164,7 @@ int main(void)
 	* string. Point libcurl to stream.
 	*/
 	stream = open_memstream(&Buf, &BufSize);
-	BuildHTTPStr(stream, &SomeNode, 1, 2, REGISTR);
+	BuildHTTPStr(REGISTR, stream, &SomeNode, 1, 2);
 	fclose(stream);
 	XferToSrver(stream, &BufSize, Host, Key);
 	free(Buffer);
@@ -172,7 +172,7 @@ int main(void)
 	// We would sample some data here....
 	
 	stream = opem_memstream(&Buffer, &BufSize);
-	BuildHTTPStr(stream, &SomeNode, 1, 2, DATA);
+	BuildHTTPStr(DATA, stream, &SomeNode, 1, 2);
 	fclose(stream);
 	XferToSrver(stream, &BufSize, Host, Key);
 	free(Buffer);
