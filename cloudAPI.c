@@ -11,10 +11,15 @@
 #include "cloudAPI.h"
 
 /*
- * Function registers a Node(s) with the server. A Node must be registered before
- * any data is uploaded.
+ * Function communicates with the Cloud server. Two modes are supported:
+ * -Mode defines request type. 0 = registration, 0 = data upload. 
+ * -stream is a pointer to a memory block of type FILE which contains the 
+ *  registration string.
+ * -streamSize is the size of stream.
+ * -Url points to a string which contains the host HTTPS address.
+ * -apiKey points to a string which contains the server passcode.
  */
-void XferToSrver(char Mode, FILE* stream, size_t* streamSize, char* Url, char* apiKey)
+void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* apiKey)
 {
 	CURL *handle;
 	CURLcode CurlRtn = 0;
@@ -48,7 +53,7 @@ void XferToSrver(char Mode, FILE* stream, size_t* streamSize, char* Url, char* a
 		else curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "POST");
 		curl_easy_setopt(handle, CURLOPT_POST, TRUE);
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);	
-		curl_easy_setopt(handle, CURLOPT_READDATA, (void*)stream);
+		curl_easy_setopt(handle, CURLOPT_READDATA, stream);
 		curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, (long)*streamSize);
 			
 		// Perform transfer.
