@@ -14,7 +14,7 @@
  * Function registers a Node(s) with the server. A Node must be registered before
  * any data is uploaded.
  */
-void XferToSrver(FILE* stream, size_t* streamSize, char* Url, char* apiKey)
+void XferToSrver(char Mode, FILE* stream, size_t* streamSize, char* Url, char* apiKey)
 {
 	CURL *handle;
 	CURLcode CurlRtn = 0;
@@ -44,7 +44,8 @@ void XferToSrver(FILE* stream, size_t* streamSize, char* Url, char* apiKey)
 		 * HTTP request. Set HTTP request to include custom headers.
 		 */
 		curl_easy_setopt(handle, CURLOPT_URL, Url);
-		curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "PUT");
+		if(Mode == 0) curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "PUT");
+		else curl_easy_setopt(handle, CURLOPT_CUSTOMREQUEST, "POST");
 		curl_easy_setopt(handle, CURLOPT_POST, TRUE);
 		curl_easy_setopt(handle, CURLOPT_HTTPHEADER, HeaderList);	
 		curl_easy_setopt(handle, CURLOPT_READDATA, (void*)stream);
