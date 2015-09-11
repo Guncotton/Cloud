@@ -72,9 +72,15 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 }
 
 /*
- * Generates the HTTP string to register nNodes & nSensors
+ * This function creates a string which is the payload to be sent to the server. Func
+ * will create a Node(s) registration string or sensor data string.
+ * -Mode: value of 0 generates registration payload, value of 1 generates data payload 
+ * -target: points to a type FILE stream to which the payload string will be written.
+ * -source: points to a structure of type Node, which contains the Node/Sensor info.
+ * -nNode: is number of nodes configured.
+ * -nSensor: is the number of configured sensors
  */
-void BuildHTTPStr(FILE* target, void* source, size_t nNode, size_t nSensor, char Mode)
+void BuildHTTPStr(char Mode, FILE* target, void* source, size_t nNode, size_t nSensor)
 {
 	int i, j;
 	struct Node* buffer = (struct Node*)source;
