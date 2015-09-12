@@ -10,8 +10,6 @@
 
 #include "cloudAPI.h"
 
-char* program_invocation_short_name = "CloudAPI";
-
 void cleanup_memstream(FILE* strm, char* buf)
 {
 	if(strm != NULL)
@@ -19,7 +17,6 @@ void cleanup_memstream(FILE* strm, char* buf)
 		fclose(strm);
 		free(buf);
 	}
-	else perror("Error: Cleanup MemStream");
 }
 /*
  * Function communicates with the Cloud server. Two modes are supported:
@@ -44,7 +41,7 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 	HeaderList = curl_slist_append(HeaderList, apiKey);
 	HeaderList = curl_slist_append(HeaderList, "Content-Type:application/json");
 	
-	if(HeaderList == NULL) perror("Error:Header List Null");
+	if(HeaderList == NULL) ErrorF("Error:Header List Null");
 	else if (handle){
 		//For Debug only.
 		curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, debug_data);
@@ -69,7 +66,7 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 		if(CurlRtn != CURLE_OK)
 			fprintf(stderr, "Error:Xfer Failed: %s\n", curl_easy_strerror(CurlRtn));
 	}
-	else perror("Error:Handle Null");
+	else ErrorF("Error:Handle Null");
 	
 	// Clean-up allocated resources.
 	curl_slist_free_all(HeaderList);
@@ -174,7 +171,7 @@ int main(void)
 	//stream = open_memstream(&Buffer, &BufSize);
 	if(stream == NULL) 
 	{
-		error(0,0,"Error: NULL stream");
+		ErrorF("Error: NULL stream");
 	}
 	else
 	{
@@ -189,7 +186,7 @@ int main(void)
 	//stream = open_memstream(&Buffer, &BufSize);
 	if(stream == NULL)
 	{
-		perror("Error: NULL stream");
+		ErrorF("Error: NULL stream");
 	}
 	else
 	{

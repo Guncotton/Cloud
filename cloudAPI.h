@@ -10,8 +10,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <error.h>
-#include <errno.h>
 #include <curl/curl.h>
 #include "debug.h"
 
@@ -25,8 +23,6 @@
 #define FAILURE -1
 #define DATA	1
 #define REGISTR 0
-
-extern char* program_invocation_short_name;
 
 struct Signal 
 {
