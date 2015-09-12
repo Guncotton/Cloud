@@ -10,6 +10,17 @@
 
 #include "cloudAPI.h"
 
+char* program_invocation_short_name = "CloudAPI";
+
+void cleanup_memstream(FILE* strm, char* buf)
+{
+	if(strm != NULL)
+	{
+		fclose(strm);
+		free(buf);
+	}
+	else perror("Error: Cleanup MemStream");
+}
 /*
  * Function communicates with the Cloud server. Two modes are supported:
  * -Mode defines request type. 0 = registration, 0 = data upload. 
@@ -33,13 +44,9 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 	HeaderList = curl_slist_append(HeaderList, apiKey);
 	HeaderList = curl_slist_append(HeaderList, "Content-Type:application/json");
 	
-	if(HeaderList == NULL){
-		fprintf(stderr, "Error:Header List Null\n");
-	}
+	if(HeaderList == NULL) perror("Error:Header List Null");
 	else if (handle){
-		/*
-		 * For Debug only.
-		 */
+		//For Debug only.
 		curl_easy_setopt(handle, CURLOPT_DEBUGFUNCTION, debug_data);
 		curl_easy_setopt(handle, CURLOPT_DEBUGDATA, (void*)"1");
 		curl_easy_setopt(handle, CURLOPT_VERBOSE, TRUE);
@@ -62,12 +69,10 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
 		if(CurlRtn != CURLE_OK)
 			fprintf(stderr, "Error:Xfer Failed: %s\n", curl_easy_strerror(CurlRtn));
 	}
-	else {
-		fprintf(stderr, "Error:Handle Null\n");
-	}
+	else perror("Error:Handle Null");
 	
 	// Clean-up allocated resources.
-	//curl_slist_free_all(HeaderList);
+	curl_slist_free_all(HeaderList);
 	curl_easy_cleanup(handle);
 }
 
@@ -80,7 +85,7 @@ void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* a
  * -nNode: is number of nodes configured.
  * -nSensor: is the number of configured sensors
  */
-void BuildHTTPStr(char Mode, FILE* target, void* source, size_t nNode, size_t nSensor)
+void CreateHTTPStr(char Mode, FILE* target, void* source, size_t nNode, size_t nSensor)
 {
 	int i, j;
 	struct Node* buffer = (struct Node*)source;
@@ -135,12 +140,12 @@ int main(void)
 	int funcRTN = -1;
 	char* Host = "https://api-iot.analoggarage.com/api/nodes";
 	char* Key = "apiKey:ithinkthereforeiam";
-	char* Buffer;
+	char* Buffer = NULL;
 	size_t BufSize;
-	FILE* stream;
+	FILE* stream = NULL;
 	struct Node SomeNode[2];
 	
-	memset(&SomeNode, '0', sizeof(SomeNode)); 
+	//memset(&SomeNode, '0', sizeof(SomeNode)); 
 	
 	//Initialize libcurl.
 	curl_global_init(CURL_GLOBAL_SSL);
@@ -149,7 +154,7 @@ int main(void)
 	SomeNode[0].Mac = "MK-Node0";
 	SomeNode[0].Sensor[0].Name = "V1";
 	SomeNode[0].Sensor[0].Type = "Voltage";
-	SomeNode[0].Sensor[0].Value = "120";
+	SomeNode[0].Sensor[0].Value = "5000";
 	SomeNode[0].Sensor[1].Name = "A1";
 	SomeNode[0].Sensor[1].Type = "Current";
 	SomeNode[0].Sensor[1].Value = "12";
@@ -161,51 +166,37 @@ int main(void)
 	SomeNode[1].Sensor[1].Name = "A2";
 	SomeNode[1].Sensor[1].Type = "Current";
 	SomeNode[1].Sensor[1].Value = "6";
+	
 	/*
 	* Create a stream to a dynamic mem buffer & write our registration 
 	* string. Point libcurl to stream.
-	*/
-	/*
-	stream = open_memstream(&Buffer, &BufSize);
-	BuildHTTPStr(REGISTR, stream, &SomeNode, 1, 2);
-	XferToSrver(REGISTR, stream, &BufSize, Host, Key);
-	fclose(stream);
-	//free(Buffer);
-	
-	// We would sample some data here....
-	
-	
-	
-
-	*/
-	
-	int s1,s2, value;
-	char str[4];
-	int i;
-	
-	stream = open_memstream(&Buffer, &BufSize);
-	srand(time(NULL));
-	for(i=0; i<10; i++)
+	*/	
+	//stream = open_memstream(&Buffer, &BufSize);
+	if(stream == NULL) 
 	{
-		value = rand()%20+110;
-		sprintf(str, "%d", value);
-		s1 = sizeof(str);
-		s2 = sizeof(SomeNode[0].Sensor[0].Value);
-		int adds2 = (int)&SomeNode[0].Sensor[0].Value;
-		
-		
-		memcpy(SomeNode[0].Sensor[0].Value, str, sizeof(str));
-		
-		value = rand()%4+8;
-		sprintf(str, "%d", value);
-		memcpy(SomeNode[0].Sensor[1].Value, str, sizeof(str));
-		
-		BuildHTTPStr(DATA, stream, &SomeNode, 1, 2);
-		//XferToSrver(DATA, stream, &BufSize, Host, Key);
+		error(0,0,"Error: NULL stream");
 	}
-	fclose(stream);
-	free(Buffer);
+	else
+	{
+		CreateHTTPStr(REGISTR, stream, &SomeNode, 1, 2);
+		//XferToSrver(REGISTR, stream, &BufSize, Host, Key);
+		cleanup_memstream(stream, Buffer);
+	}
 	
+	//We would sample some data here....
+	struct Node* ptrNode = SomeNode;
+	
+	//stream = open_memstream(&Buffer, &BufSize);
+	if(stream == NULL)
+	{
+		perror("Error: NULL stream");
+	}
+	else
+	{
+		CreateHTTPStr(DATA, stream, &SomeNode, 1, 2);
+		//XferToSrver(DATA, stream, &BufSize, Host, Key);
+		cleanup_memstream(stream, Buffer);
+	}
 	//Free resources acq'd by libcurl.		
 	curl_global_cleanup();
 	return (EXIT_SUCCESS);
