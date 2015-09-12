@@ -10,11 +10,21 @@
 
 #include "cloudAPI.h"
 
-void cleanup_memstream(FILE* strm, char* buf)
+int CreatePayloadBuf(FILE** fp, char*** buf, size_t** bufsize)
 {
-	if(strm != NULL)
+	*fp = open_memstream(*buf, *bufsize);
+	if(fp == 0) 
 	{
-		fclose(strm);
+		ErrorF("NULL stream");
+		return (FAILURE);
+	}
+	return (SUCCESS);
+}
+void DestroyPayloadBuf(FILE* fp, char* buf)
+{
+	if(fp != NULL)
+	{
+		fclose(fp);
 		free(buf);
 	}
 }
@@ -27,7 +37,7 @@ void cleanup_memstream(FILE* strm, char* buf)
  * -Url points to a string which contains the host HTTPS address.
  * -apiKey points to a string which contains the server passcode.
  */
-void XferToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* apiKey)
+void SendToSrver(char Mode, void* stream, size_t* streamSize, char* Url, char* apiKey)
 {
 	CURL *handle;
 	CURLcode CurlRtn = 0;
@@ -165,34 +175,41 @@ int main(void)
 	SomeNode[1].Sensor[1].Value = "6";
 	
 	/*
-	* Create a stream to a dynamic mem buffer & write our registration 
-	* string. Point libcurl to stream.
+	* Create dynamic mem buffer for data to server. Create
+	* either registration or data payload. Send the data to
+	* the server. Lastly, cleanup resources used by payload
+	* buffer.
 	*/	
 	//stream = open_memstream(&Buffer, &BufSize);
-	if(stream == NULL) 
-	{
-		ErrorF("Error: NULL stream");
-	}
-	else
+	if(CreatePayloadBuf(&stream, *Buffer, *BufSize) == SUCCESS) 
 	{
 		CreateHTTPStr(REGISTR, stream, &SomeNode, 1, 2);
-		//XferToSrver(REGISTR, stream, &BufSize, Host, Key);
-		cleanup_memstream(stream, Buffer);
+		//SendToSrver(REGISTR, stream, &BufSize, Host, Key);
+		DestroyPayloadBuf(stream, Buffer);
 	}
 	
 	//We would sample some data here....
-	struct Node* ptrNode = SomeNode;
+	//struct Node* ptrNode = SomeNode;
 	
-	//stream = open_memstream(&Buffer, &BufSize);
+	srand(time(NULL));
+	char* new = "1234";
+	
+	size_t From = strlen(new);
+	size_t To = strlen(SomeNode[0].Sensor[0].Value);
+	
+	printf("len new:%u\tlen Value:%u\nsize From: %u\tsize To:%u\n", From, To, sizeof(new), sizeof(SomeNode[0].Sensor[0].Value));
+	
+	
+	stream = open_memstream(&Buffer, &BufSize);
 	if(stream == NULL)
 	{
-		ErrorF("Error: NULL stream");
+		ErrorF("NULL stream");
 	}
 	else
 	{
 		CreateHTTPStr(DATA, stream, &SomeNode, 1, 2);
-		//XferToSrver(DATA, stream, &BufSize, Host, Key);
-		cleanup_memstream(stream, Buffer);
+		//SendToSrver(DATA, stream, &BufSize, Host, Key);
+		DestroyPayloadBuf(stream, Buffer);
 	}
 	//Free resources acq'd by libcurl.		
 	curl_global_cleanup();
