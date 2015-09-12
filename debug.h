@@ -96,8 +96,8 @@ static int debug_data(CURL *handle, curl_infotype type, char *data, size_t size,
   return(1);
 }
 
-void DebugF(char* string, int* value)
+void ErrorF(char* string)
 {
-	fprintf(stderr, "DEBUG: %s%i\n", string, *value);
+	fprintf(stderr, "DEBUG: %s\n", string);
 }
 #endif	/* DEBUG_H */
