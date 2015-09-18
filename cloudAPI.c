@@ -97,49 +97,36 @@ void CreateHTTPStr(char Mode, FILE* target, void* source, size_t nNode, size_t n
 	int i, j;
 	struct Node* buffer = (struct Node*)source;
 	
-	//target = stdout;
-	
 	rewind(target);
 	
-	// Registration string.
-	if(Mode == 0)
+	putc('[', target);
+	
+	for(i = 0; i < nNode; i++)
 	{
-		putc('[', target);
-		for(i = 0; i < nNode; i++)
+		if(i!=0) putc(',', target);
+		
+		fprintf(target, "{\"mac\":\"%s\",\"sensors\":[", buffer[i].Mac);
+		
+		for(j = 0; j < nSensor; j++)
 		{
-			if(i!=0) putc(',', target);
-			fprintf(target, "{\"mac\":\"%s\",\"sensors\":[", buffer[i].Mac);
-			for(j = 0; j < nSensor; j++)
+			if(j!=0) putc(',', target); // 
+			
+			if(Mode == REGISTR) // string for registration.
 			{
-				if(j!=0) putc(',', target);
 				fprintf(target, "{\"name\":\"%s\",\"type\":\"%s\"}",
-						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Type);
-			}
-			fprintf(target, "]");
-		}
-		fprintf(target, "}]");
-
-		fflush(target);
-	}
-	else // data string.
-	{
-		putc('[', target);
-		for(i = 0; i < nNode; i++)
-		{
-			if(i!=0) putc(',', target);
-			fprintf(target, "{\"mac\":\"%s\",\"sensors\":[", buffer[i].Mac);
-			for(j = 0; j < nSensor; j++)
+					buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Type);
+			} else // string for data.
 			{
-				if(j!=0) putc(',', target);
 				fprintf(target, "{\"name\":\"%s\",\"value\":%s}",
-						buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Value);
+					buffer[i].Sensor[j].Name, buffer[i].Sensor[j].Value);
 			}
-			fprintf(target, "]");
+						
 		}
-		fprintf(target, "}]");
-
-		fflush(target);
+		fprintf(target, "]");
 	}
+	fprintf(target, "}]");
+
+	fflush(target);
 }
 
 int main(void)
